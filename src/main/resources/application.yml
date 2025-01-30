@@ -1,0 +1,34 @@
+# Catnip config
+catnip:
+  permission:
+#    Permission level: ALL -> SUB -> VIP -> MOD -> STREAMER
+    music:
+        request: ALL
+        removeLastSelf: ALL
+        voteSkip: ALL
+        forceSkip: MOD
+        blacklist: MOD
+
+    deathCount:
+      add: VIP
+      subtract: VIP
+
+  cache:
+    directories: [
+      "/cache/",
+      "/cache/music/",
+      "/cache/music/backup-playlist/",
+      "/cache/music/download/",
+    ]
+
+# Springboot config
+spring:
+  application:
+    name: Catnip
+server:
+  port: 8080
+logging:
+  level:
+    #    root: TRACE
+    #    org.springframework.web: TRACE
+    dev.taway.catnip: TRACE
