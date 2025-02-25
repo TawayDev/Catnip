@@ -2,14 +2,19 @@ package dev.taway.catnip.controller;
 
 import dev.taway.catnip.config.CatnipConfig;
 import dev.taway.catnip.dto.request.death.DeathCounterRequest;
-import dev.taway.catnip.dto.response.BasicResponse;
+import dev.taway.catnip.dto.response.DeathCounterResponse;
 import dev.taway.catnip.service.DeathCounterService;
 import dev.taway.catnip.service.PermissionService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/death")
@@ -26,65 +31,66 @@ public class DeathCounterController {
         this.catnipConfig = catnipConfig;
     }
 
-    @Operation(summary = "Adds 1 to death counter", description = "Adds 1 to death counter and returns the standard response JSON")
+    @Operation(summary = "Adds 1 to death counter", description = "Adds 1 to death counter")
     @ApiResponse(responseCode = "200", description = "Success")
     @ApiResponse(responseCode = "401", description = "User requesting this does not have the necessary permissions to add to counter")
     @PostMapping("/add")
-    public ResponseEntity<BasicResponse> addPost(@RequestBody DeathCounterRequest request) {
-        if(!permissionService.canRequest(request, catnipConfig.getPermission().getDeathCount().getAdd())) {
-            return ResponseEntity.status(401).body(new BasicResponse(true,"You do not have the necessary permissions to perform this action."));
+    public ResponseEntity<DeathCounterResponse> add(@RequestBody DeathCounterRequest request) {
+        if (!permissionService.canRequest(request, catnipConfig.getPermission().getDeathCount().getAdd())) {
+            return ResponseEntity.status(401).body(new DeathCounterResponse(
+                    true,
+                    "You do not have the necessary permissions to perform this action.",
+                    -1
+            ));
         }
 
-        deathCounterService.add(request);
+        int value = deathCounterService.changeEntryValue(request, 1);
 
-        return  ResponseEntity.ok(new BasicResponse(
+        return ResponseEntity.ok(new DeathCounterResponse(
                 false,
-                String.format("Added 1 death to %s death counter", request.getGameName())
-                ));
-    }
-
-    @Operation(summary = "Adds 1 to death counter", description = "Adds 1 to death counter and returns only the message.")
-    @ApiResponse(responseCode = "200", description = "Success")
-    @ApiResponse(responseCode = "401", description = "User requesting this does not have the necessary permissions to add to counter")
-    @PutMapping("/add")
-    public ResponseEntity<String> addPut(@RequestBody DeathCounterRequest request) {
-        if(!permissionService.canRequest(request, catnipConfig.getPermission().getDeathCount().getAdd())) {
-            return ResponseEntity.status(401).body("You do not have the necessary permissions to perform this action.");
-        }
-
-        deathCounterService.add(request);
-
-        return  ResponseEntity.ok(String.format("Added 1 death to %s death counter", request.getGameName()));
-    }
-
-    @Operation(summary = "Subtracts 1 from death counter", description = "Subtracts 1 from death counter and returns only the message.")
-    @ApiResponse(responseCode = "200", description = "Success")
-    @ApiResponse(responseCode = "401", description = "User requesting this does not have the necessary permissions to subtract 1 from counter")
-    @PostMapping("/subtract")
-    public ResponseEntity<BasicResponse> subtractPost(@RequestBody DeathCounterRequest request) {
-        if(!permissionService.canRequest(request, catnipConfig.getPermission().getDeathCount().getAdd())) {
-            return ResponseEntity.status(401).body(new BasicResponse(true,"You do not have the necessary permissions to perform this action."));
-        }
-
-        deathCounterService.add(request);
-
-        return  ResponseEntity.ok(new BasicResponse(
-                false,
-                String.format("Subtracted 1 death from %s counter", request.getGameName())
+                String.format("%s counter is now at %d!", request.getGameName(), value),
+                value
         ));
     }
 
-    @Operation(summary = "Subtracts 1 from death counter", description = "Subtracts 1 from death counter and returns only the message.")
+    @Operation(summary = "Subtracts 1 from death counter", description = "Subtracts 1 from death counter")
     @ApiResponse(responseCode = "200", description = "Success")
     @ApiResponse(responseCode = "401", description = "User requesting this does not have the necessary permissions to subtract 1 from counter")
-    @PutMapping("/subtract")
-    public ResponseEntity<String> subtractPut(@RequestBody DeathCounterRequest request) {
-        if(!permissionService.canRequest(request, catnipConfig.getPermission().getDeathCount().getAdd())) {
-            return ResponseEntity.status(401).body("You do not have the necessary permissions to perform this action.");
+    @PostMapping("/subtract")
+    public ResponseEntity<DeathCounterResponse> subtract(@RequestBody DeathCounterRequest request) {
+        if (!permissionService.canRequest(request, catnipConfig.getPermission().getDeathCount().getAdd())) {
+            return ResponseEntity.status(401).body(new DeathCounterResponse(
+                    true,
+                    "You do not have the necessary permissions to perform this action.",
+                    -1
+            ));
         }
 
-        deathCounterService.subtract(request);
+        int value = deathCounterService.changeEntryValue(request, -1);
 
-        return  ResponseEntity.ok(String.format("Subtracted 1 death from %s counter", request.getGameName()));
+        return ResponseEntity.ok(new DeathCounterResponse(
+                false,
+                String.format("%s counter is now at %d!", request.getGameName(), value),
+                value
+        ));
+    }
+
+    @Operation(summary = "Returns counter value", description = "Returns counter value for the specified counter.")
+    @ApiResponse(responseCode = "200", description = "Success")
+    @ApiResponse(responseCode = "404", description = "The requested game death counter has not been found on this server.")
+    @PostMapping("/info")
+    public ResponseEntity<DeathCounterResponse> info(@RequestBody DeathCounterRequest request) {
+
+        Optional<Integer> value = deathCounterService.getCounterValue(request.getGameName());
+
+        return value.map(integer -> ResponseEntity.ok(new DeathCounterResponse(
+                false,
+                String.format("%s counter is at %d!", request.getGameName(), integer),
+                integer
+        ))).orElseGet(() -> ResponseEntity.status(404).body(new DeathCounterResponse(
+                true,
+                String.format("Death counter '%s' could not be found!", request.getGameName()),
+                -1
+        )));
     }
 }

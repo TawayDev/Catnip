@@ -24,7 +24,7 @@ public class SelectorController {
     @ApiResponse(responseCode = "200", description = "Success")
     @ApiResponse(responseCode = "400", description = "Options in request are empty")
     @PostMapping("/either")
-    public ResponseEntity<BasicResponse> eitherPost(@RequestBody SelectorRequest request) {
+    public ResponseEntity<BasicResponse> either(@RequestBody SelectorRequest request) {
         String selection = selectorService.selectOne(request.getOptions());
 
         if (selection == null) {
@@ -32,20 +32,5 @@ public class SelectorController {
         }
 
         return ResponseEntity.ok(new BasicResponse(false, selection));
-    }
-
-    @Operation(summary = "Chooses one of n inputted strings", description = "Chooses one of n inputted strings. Reply is string.")
-    @ApiResponse(responseCode = "200", description = "Success")
-    @ApiResponse(responseCode = "400", description = "Options in request are empty")
-    @ApiResponse()
-    @PutMapping("/either")
-    public ResponseEntity<String> eitherPut(@RequestBody SelectorRequest request) {
-        String selection = selectorService.selectOne(request.getOptions());
-
-        if (selection == null) {
-            return ResponseEntity.badRequest().body("No selection found");
-        }
-
-        return ResponseEntity.ok(selection);
     }
 }

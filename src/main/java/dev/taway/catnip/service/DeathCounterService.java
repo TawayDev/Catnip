@@ -14,6 +14,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Optional;
 
 @Service
 @Getter
@@ -44,24 +45,6 @@ public class DeathCounterService {
         }
     }
 
-    /**
-     * Subtracts one to death counter for the game
-     * @param request Request from client
-     */
-    public void add(DeathCounterRequest request) {
-        validateEntryExistence(request.getGameName());
-        changeEntryValue(request.getGameName(), 1);
-    }
-
-    /**
-     * Adds one to death counter for the game
-     * @param request Request from client
-     */
-    public void subtract(DeathCounterRequest request) {
-        validateEntryExistence(request.getGameName());
-        changeEntryValue(request.getGameName(), -1);
-    }
-
     private void validateEntryExistence(String gameName) {
         for (DeathCountEntry deathCountEntry : deathCounter) {
             if (deathCountEntry.getGameName().equals(gameName)) return;
@@ -71,20 +54,40 @@ public class DeathCounterService {
     }
 
     /**
-     * @param gameName Game entry to be modified
+     * @param gameName Game name to get its counter value
+     * @return Returns counter value OR null if it could not be found.
+     * */
+    public Optional<Integer> getCounterValue(String gameName) {
+        Optional<Integer> value = Optional.empty();
+
+        gameName = gameName.toLowerCase();
+        for (DeathCountEntry deathCountEntry : deathCounter) {
+            if (deathCountEntry.getGameName().toLowerCase().equals(gameName)) {
+                value = Optional.of(deathCountEntry.getDeaths());
+                break;
+            }
+        }
+        return value;
+    }
+
+    /**
+     * @param request Request
      * @param change Change to the death counter. Will add or subtract this amount.
      */
-    private void changeEntryValue(String gameName, int change) {
+    public int changeEntryValue(DeathCounterRequest request, int change) {
+        String gameName = request.getGameName();
+        validateEntryExistence(gameName);
+
         for (DeathCountEntry deathCountEntry : deathCounter) {
             if (deathCountEntry.getGameName().equals(gameName)) {
                 deathCountEntry.setDeaths(deathCountEntry.getDeaths() + change);
-                log.debug("Death counter {} now has value {}", deathCountEntry.getGameName(), deathCountEntry.getDeaths());
-                return;
+                log.trace("Death counter: {}, Current: {}, Change {}", deathCountEntry.getGameName(), deathCountEntry.getDeaths(), change);
+                return deathCountEntry.getDeaths();
             }
         }
 
         throw new RuntimeException(
-                String.format("Could not add %d to death counter entry as it does not exist!", change)
+                String.format("Could not add \"%d\" to \"%s\" counter entry as it does not exist! ", change, gameName)
         );
     }
 
