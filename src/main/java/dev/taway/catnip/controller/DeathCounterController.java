@@ -33,7 +33,7 @@ public class DeathCounterController {
 
     @Operation(summary = "Adds 1 to death counter", description = "Adds 1 to death counter")
     @ApiResponse(responseCode = "200", description = "Success")
-    @ApiResponse(responseCode = "401", description = "User requesting this does not have the necessary permissions to add to counter")
+    @ApiResponse(responseCode = "401", description = "UserAction requesting this does not have the necessary permissions")
     @PostMapping("/add")
     public ResponseEntity<DeathCounterResponse> add(@RequestBody DeathCounterRequest request) {
         if (!permissionService.canRequest(request, catnipConfig.getPermission().getDeathCount().getAdd())) {
@@ -55,7 +55,7 @@ public class DeathCounterController {
 
     @Operation(summary = "Subtracts 1 from death counter", description = "Subtracts 1 from death counter")
     @ApiResponse(responseCode = "200", description = "Success")
-    @ApiResponse(responseCode = "401", description = "User requesting this does not have the necessary permissions to subtract 1 from counter")
+    @ApiResponse(responseCode = "401", description = "User requesting this does not have the necessary permissions")
     @PostMapping("/subtract")
     public ResponseEntity<DeathCounterResponse> subtract(@RequestBody DeathCounterRequest request) {
         if (!permissionService.canRequest(request, catnipConfig.getPermission().getDeathCount().getAdd())) {

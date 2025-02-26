@@ -8,7 +8,10 @@ catnip:
         voteSkip: ALL
         forceSkip: MOD
         blacklist: MOD
-
+        userAction:
+          blacklistUser: MOD
+          timeoutUser: MOD
+          timeoutDefaultDurationDays: 1
     deathCount:
       add: VIP
       subtract: VIP
@@ -25,8 +28,13 @@ catnip:
 spring:
   application:
     name: Catnip
+  output:
+    ansi:
+      enabled: ALWAYS
+
 server:
   port: 8080
+
 logging:
   level:
     #    root: TRACE

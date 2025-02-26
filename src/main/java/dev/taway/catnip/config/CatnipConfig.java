@@ -26,11 +26,20 @@ public class CatnipConfig {
 
         @Data
         public static class Music {
+            private UserAction userAction;
+
             private PermissionLevel request;
             private PermissionLevel removeLastSelf;
             private PermissionLevel voteSkip;
             private PermissionLevel forceSkip;
             private PermissionLevel blacklist;
+
+            @Data
+            public static class UserAction {
+                private PermissionLevel blacklistUser;
+                private PermissionLevel timeoutUser;
+                private int timeoutDefaultDurationDays;
+            }
         }
 
         @Data

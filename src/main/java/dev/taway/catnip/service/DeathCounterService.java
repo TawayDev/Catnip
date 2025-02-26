@@ -20,12 +20,13 @@ import java.util.Optional;
 @Getter
 public class DeathCounterService {
     private static final Logger log = LogManager.getLogger(DeathCounterService.class);
+    private static final String PATH = "/cache/death-counter.json";
 
     ArrayList<DeathCountEntry> deathCounter = new ArrayList<>();
 
     @PostConstruct
     private void init() {
-        File deathCounterFile = new File(System.getProperty("user.dir") + "/cache/death-counter.json");
+        File deathCounterFile = new File(System.getProperty("user.dir") + PATH);
         if (!deathCounterFile.exists()) {
             log.warn("Death counter json was not loaded as it does not exist!");
             return;
@@ -34,7 +35,7 @@ public class DeathCounterService {
         ObjectMapper objectMapper = new ObjectMapper();
 
         try {
-            DeathCountEntry[] deathCountEntries = objectMapper.readValue(new File(System.getProperty("user.dir") + "/cache/death-counter.json"), DeathCountEntry[].class);
+            DeathCountEntry[] deathCountEntries = objectMapper.readValue(new File(System.getProperty("user.dir") + PATH), DeathCountEntry[].class);
 
             deathCounter = new ArrayList<>(Arrays.asList(deathCountEntries));
 
@@ -96,7 +97,7 @@ public class DeathCounterService {
         ObjectMapper objectMapper = new ObjectMapper();
 
         try {
-            objectMapper.writeValue(new File(System.getProperty("user.dir") + "/cache/death-counter.json"), deathCounter);
+            objectMapper.writeValue(new File(System.getProperty("user.dir") + PATH), deathCounter);
             log.info("Death counter saved successfully!");
         } catch (IOException e) {
             log.error("An error occurred while trying to save death counter to file! {}", e.getMessage());
