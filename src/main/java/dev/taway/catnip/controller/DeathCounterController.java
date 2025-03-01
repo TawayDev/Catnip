@@ -7,6 +7,8 @@ import dev.taway.catnip.service.DeathCounterService;
 import dev.taway.catnip.service.PermissionService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -19,6 +21,7 @@ import java.util.Optional;
 @RestController
 @RequestMapping("/api/death")
 public class DeathCounterController {
+    private static final Logger log = LogManager.getLogger(DeathCounterController.class);
 
     private final PermissionService permissionService;
     private final DeathCounterService deathCounterService;
@@ -37,6 +40,15 @@ public class DeathCounterController {
     @PostMapping("/add")
     public ResponseEntity<DeathCounterResponse> add(@RequestBody DeathCounterRequest request) {
         if (!permissionService.canRequest(request, catnipConfig.getPermission().getDeathCount().getAdd())) {
+            log.info(
+                    "Death counter add request rejected. Insufficient permissions. <{}> Required: {} but has [Streamer: {}, Mod: {}, VIP: {}, Subscriber: {}]",
+                    request.getUsername(),
+                    catnipConfig.getPermission().getDeathCount().getAdd(),
+                    request.isStreamer(),
+                    request.isMod(),
+                    request.isVIP(),
+                    request.isSubscriber()
+            );
             return ResponseEntity.status(401).body(new DeathCounterResponse(
                     true,
                     "You do not have the necessary permissions to perform this action.",
@@ -58,7 +70,16 @@ public class DeathCounterController {
     @ApiResponse(responseCode = "401", description = "User requesting this does not have the necessary permissions")
     @PostMapping("/subtract")
     public ResponseEntity<DeathCounterResponse> subtract(@RequestBody DeathCounterRequest request) {
-        if (!permissionService.canRequest(request, catnipConfig.getPermission().getDeathCount().getAdd())) {
+        if (!permissionService.canRequest(request, catnipConfig.getPermission().getDeathCount().getSubtract())) {
+            log.info(
+                    "Death counter subtract request rejected. Insufficient permissions. <{}> Required: {} but has [Streamer: {}, Mod: {}, VIP: {}, Subscriber: {}]",
+                    request.getUsername(),
+                    catnipConfig.getPermission().getDeathCount().getSubtract(),
+                    request.isStreamer(),
+                    request.isMod(),
+                    request.isVIP(),
+                    request.isSubscriber()
+            );
             return ResponseEntity.status(401).body(new DeathCounterResponse(
                     true,
                     "You do not have the necessary permissions to perform this action.",

@@ -78,9 +78,15 @@ public class PermissionService {
                         Long.MAX_VALUE
         );
 
-        log.debug(userBlacklistEntry.toString());
-
         userBlacklist.add(userBlacklistEntry);
+
+        log.info("Successfully blacklisted user \"{}\" [Banned by: {}, Expires in: {}]",
+                username,
+                bannedBy,
+                expiresInDays > 0 ?
+                        (expiresInDays + " days") : "never"
+        );
+
         return String.format("Added user %s to blacklist!", username);
     }
 
@@ -102,6 +108,11 @@ public class PermissionService {
 
         if (entry != null) {
             userBlacklist.remove(entry);
+
+            log.info("Successfully removed user \"{}\" from blacklist!",
+                    username
+            );
+
             return String.format("Removed user %s from blacklist!", username);
         } else {
             return String.format("User %s is not blacklisted!", username);

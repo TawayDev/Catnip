@@ -5,14 +5,19 @@ import dev.taway.catnip.dto.response.BasicResponse;
 import dev.taway.catnip.service.SelectorService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.Arrays;
 
 @RestController
 @RequestMapping("/api/selector")
 public class SelectorController {
 
+    private static final Logger log = LogManager.getLogger(SelectorController.class);
     private final SelectorService selectorService;
 
     @Autowired
@@ -28,9 +33,11 @@ public class SelectorController {
         String selection = selectorService.selectOne(request.getOptions());
 
         if (selection == null) {
+            log.error("Unable to select from array. Array is empty!");
             return ResponseEntity.badRequest().body(new BasicResponse(true, "No selection found"));
         }
 
+        log.info("Selected \"{}\" from {}", selection, Arrays.toString(request.getOptions()));
         return ResponseEntity.ok(new BasicResponse(false, selection));
     }
 }

@@ -10,8 +10,6 @@ catnip:
         blacklist: MOD
         userAction:
           blacklistUser: MOD
-          timeoutUser: MOD
-          timeoutDefaultDurationDays: 1
     deathCount:
       add: VIP
       subtract: VIP

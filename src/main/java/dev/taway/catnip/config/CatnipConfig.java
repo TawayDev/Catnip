@@ -37,8 +37,6 @@ public class CatnipConfig {
             @Data
             public static class UserAction {
                 private PermissionLevel blacklistUser;
-                private PermissionLevel timeoutUser;
-                private int timeoutDefaultDurationDays;
             }
         }
 

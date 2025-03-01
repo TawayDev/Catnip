@@ -51,13 +51,14 @@ public class DeathCounterService {
             if (deathCountEntry.getGameName().equals(gameName)) return;
         }
 
+        log.debug("Added new death counter for game \"{}\"", gameName);
         deathCounter.add(new DeathCountEntry(gameName, 0));
     }
 
     /**
      * @param gameName Game name to get its counter value
      * @return Returns counter value OR null if it could not be found.
-     * */
+     */
     public Optional<Integer> getCounterValue(String gameName) {
         Optional<Integer> value = Optional.empty();
 
@@ -73,7 +74,7 @@ public class DeathCounterService {
 
     /**
      * @param request Request
-     * @param change Change to the death counter. Will add or subtract this amount.
+     * @param change  Change to the death counter. Will add or subtract this amount.
      */
     public int changeEntryValue(DeathCounterRequest request, int change) {
         String gameName = request.getGameName();
@@ -82,7 +83,7 @@ public class DeathCounterService {
         for (DeathCountEntry deathCountEntry : deathCounter) {
             if (deathCountEntry.getGameName().equals(gameName)) {
                 deathCountEntry.setDeaths(deathCountEntry.getDeaths() + change);
-                log.trace("Death counter: {}, Current: {}, Change {}", deathCountEntry.getGameName(), deathCountEntry.getDeaths(), change);
+                log.trace("Death counter: {}, Current: {}, Change: {}", deathCountEntry.getGameName(), deathCountEntry.getDeaths(), change);
                 return deathCountEntry.getDeaths();
             }
         }
