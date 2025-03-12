@@ -15,6 +15,7 @@ catnip:
       subtract: VIP
 
   cache:
+    maximumSongDurationSeconds: 420
     directories: [
       "/cache/",
       "/cache/music/",

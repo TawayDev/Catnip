@@ -13,6 +13,7 @@ public class CatnipConfig {
 
     @Data
     public static class Cache {
+        private int maximumSongDurationSeconds;
         /**
          * Folders that will be created if they do not exist on application start. Paths are relative to the current working directory.
          */
