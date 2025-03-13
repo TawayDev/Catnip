@@ -123,8 +123,23 @@ public class PermissionService {
         return PermissionLevel.ALL;
     }
 
+    /**
+     * Checks if user has necessary permissions to do an action<br>
+     * Example usage:<br>
+     * {@code
+     * ResponseEntity<BasicResponse> r = permissionService.validateUserRequest(request, catnipConfig.getPermission().getMusic().getRequest(), true);
+     * if (r.getStatusCode().is4xxClientError()) {
+     * return r;
+     * }
+     * }<br>
+     *
+     * @param request                 API BasicRequest object containing permissions
+     * @param requiredPermissionLevel Minimum allowed level
+     * @param checkBlacklist          If true checks user blacklist (Overrides minimum permission level)
+     * @return 400 if Unauthorised.
+     */
     public ResponseEntity<BasicResponse> validateUserRequest(BasicRequest request, PermissionLevel requiredPermissionLevel, boolean checkBlacklist) {
-        if (canRequest(request, requiredPermissionLevel)) {
+        if (!canRequest(request, requiredPermissionLevel)) {
             log.info(
                     "API request rejected. Insufficient permissions. <{}> Required: {} but has [Streamer: {}, Mod: {}, VIP: {}, Subscriber: {}]",
                     request.getUsername(),
