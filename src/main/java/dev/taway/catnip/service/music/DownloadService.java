@@ -8,9 +8,7 @@ import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.InputStreamReader;
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -32,6 +30,13 @@ public class DownloadService {
         this.config = config;
     }
 
+    /**
+     * Downloads a song from the provided URL and returns a MusicCacheEntry object containing metadata and download details.
+     * If the song's duration exceeds the maximum allowed duration specified in the configuration, the entry will be marked as blocked.
+     *
+     * @param url The URL of the song to be downloaded.
+     * @return A MusicCacheEntry object containing metadata, download status, and local file information.
+     */
     public MusicCacheEntry downloadSong(String url) {
         String urlShortened = UrlShortenerUtil.shortenURL(url);
         MusicCacheEntry entry = metadataService.fetchMetadata(url);
@@ -49,7 +54,7 @@ public class DownloadService {
     private MusicCacheEntry performDownload(MusicCacheEntry entry) {
         try {
             Process process = createDownloadProcess(entry.getUrl()).start();
-            AbstractMap.SimpleEntry<ArrayList<String>, ArrayList<String>> output = handleProcessOutput(process);
+            AbstractMap.SimpleEntry<ArrayList<String>, ArrayList<String>> output = ProcessOutputUtil.handleProcessOutput(process);
             process.waitFor();
 
             var downloadResult = parseDownloadOutput(output);
@@ -121,21 +126,5 @@ public class DownloadService {
         String name = file.getName();
         int lastIndexOf = name.lastIndexOf(".");
         return lastIndexOf == -1 ? "" : name.substring(lastIndexOf + 1);
-    }
-
-    private AbstractMap.SimpleEntry<ArrayList<String>, ArrayList<String>> handleProcessOutput(Process process)
-            throws Exception {
-        ArrayList<String> lines = new ArrayList<>();
-        ArrayList<String> errLines = new ArrayList<>();
-
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-             BufferedReader errReader = new BufferedReader(new InputStreamReader(process.getErrorStream()))) {
-
-            String line;
-            while ((line = reader.readLine()) != null) lines.add(line);
-            while ((line = errReader.readLine()) != null) errLines.add(line);
-        }
-
-        return new AbstractMap.SimpleEntry<>(lines, errLines);
     }
 }

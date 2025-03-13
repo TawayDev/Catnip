@@ -7,8 +7,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.stereotype.Service;
 
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Map;
@@ -18,10 +16,18 @@ public class MetadataService {
 
     private static final Logger log = LogManager.getLogger(MetadataService.class);
 
+    /**
+     * Fetches metadata for a given URL using an external process (yt-dlp) and returns a MusicCacheEntry object.
+     * The metadata includes details such as title, artist/channel, and duration.
+     *
+     * @param url The URL of the media for which metadata is to be fetched.
+     * @return A MusicCacheEntry object containing the extracted metadata.
+     * @throws RuntimeException If the metadata retrieval or parsing fails.
+     */
     public MusicCacheEntry fetchMetadata(String url) {
         try {
             Process process = createMetadataProcess(url).start();
-            AbstractMap.SimpleEntry<ArrayList<String>, ArrayList<String>> output = handleProcessOutput(process);
+            AbstractMap.SimpleEntry<ArrayList<String>, ArrayList<String>> output = ProcessOutputUtil.handleProcessOutput(process);
             process.waitFor();
             return parseMetadata(output);
         } catch (Exception e) {
@@ -68,21 +74,5 @@ public class MetadataService {
         entry.setArtist(data.get("channel").toString());
         entry.setDuration(Double.parseDouble(data.get("duration").toString()));
         return entry;
-    }
-
-    private AbstractMap.SimpleEntry<ArrayList<String>, ArrayList<String>> handleProcessOutput(Process process)
-            throws Exception {
-        ArrayList<String> lines = new ArrayList<>();
-        ArrayList<String> errLines = new ArrayList<>();
-
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-             BufferedReader errReader = new BufferedReader(new InputStreamReader(process.getErrorStream()))) {
-
-            String line;
-            while ((line = reader.readLine()) != null) lines.add(line);
-            while ((line = errReader.readLine()) != null) errLines.add(line);
-        }
-
-        return new AbstractMap.SimpleEntry<>(lines, errLines);
     }
 }

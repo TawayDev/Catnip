@@ -17,10 +17,23 @@ public class MusicCacheService {
         this.downloadService = downloadService;
     }
 
+    /**
+     * Retrieves a MusicCacheEntry from the cache based on the shortened URL.
+     *
+     * @param urlShortened The shortened URL used as a key to look up the cache entry.
+     * @return An Optional containing the MusicCacheEntry if found, or an empty Optional if not found.
+     */
     public Optional<MusicCacheEntry> getMusicCacheEntry(String urlShortened) {
         return cacheManager.getEntry(urlShortened);
     }
 
+    /**
+     * Caches a song by downloading it (if not already cached) and adds its metadata to the cache.
+     * If the song is already cached, the existing entry is returned without re-downloading.
+     *
+     * @param url The URL of the song to be cached.
+     * @return An Optional containing the MusicCacheEntry for the cached song.
+     */
     public Optional<MusicCacheEntry> cacheSong(String url) {
         String shortenedUrl = UrlShortenerUtil.shortenURL(url);
         Optional<MusicCacheEntry> existing = cacheManager.getEntry(shortenedUrl);
@@ -34,6 +47,10 @@ public class MusicCacheService {
         return Optional.of(newEntry);
     }
 
+    /**
+     * Cleans up the music cache by removing invalid entries.
+     * This method delegates the cleanup operation to the MusicCacheManagerService.
+     */
     public void cleanupCache() {
         cacheManager.cleanupCache();
     }
