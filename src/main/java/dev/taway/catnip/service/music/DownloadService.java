@@ -2,6 +2,7 @@ package dev.taway.catnip.service.music;
 
 import dev.taway.catnip.config.CatnipConfig;
 import dev.taway.catnip.data.MusicCacheEntry;
+import dev.taway.catnip.data.MusicCacheEntryBlockReason;
 import dev.taway.catnip.service.file.FileWatchService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -38,13 +39,14 @@ public class DownloadService {
      * @return A MusicCacheEntry object containing metadata, download status, and local file information.
      */
     public MusicCacheEntry downloadSong(String url) {
-        String urlShortened = UrlShortenerUtil.shortenURL(url);
+        String urlShortened = UrlUtil.shortenURL(url);
         MusicCacheEntry entry = metadataService.fetchMetadata(url);
         entry.setUrl(url);
         entry.setUrlShortened(urlShortened);
 
         if (entry.getDuration() > config.getCache().getMaximumSongDurationSeconds()) {
             entry.setBlocked(true);
+            entry.setBlockReason(MusicCacheEntryBlockReason.TOO_LONG);
             return entry;
         }
 

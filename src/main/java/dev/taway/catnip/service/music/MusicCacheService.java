@@ -35,7 +35,7 @@ public class MusicCacheService {
      * @return An Optional containing the MusicCacheEntry for the cached song.
      */
     public Optional<MusicCacheEntry> cacheSong(String url) {
-        String shortenedUrl = UrlShortenerUtil.shortenURL(url);
+        String shortenedUrl = UrlUtil.shortenURL(url);
         Optional<MusicCacheEntry> existing = cacheManager.getEntry(shortenedUrl);
 
         if (existing.isPresent()) {

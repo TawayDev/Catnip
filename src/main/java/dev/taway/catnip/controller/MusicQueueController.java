@@ -6,7 +6,7 @@ import dev.taway.catnip.dto.request.music.MusicQueueRequest;
 import dev.taway.catnip.dto.response.BasicResponse;
 import dev.taway.catnip.service.PermissionService;
 import dev.taway.catnip.service.music.MusicCacheService;
-import dev.taway.catnip.service.music.UrlShortenerUtil;
+import dev.taway.catnip.service.music.UrlUtil;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import org.apache.logging.log4j.LogManager;
@@ -47,11 +47,11 @@ public class MusicQueueController {
             return r;
         }
 
-//        TODO: check if link is playlist. remove playlist part from it.
-//        TODO: remove ?si= from URL!!!!
+//        Sanitize URL. Remove tracking, playlist link etc.
+        request.setURL(UrlUtil.sanitizeURL(request.getURL()));
 
         BasicResponse response = new BasicResponse();
-        String url_shortened = UrlShortenerUtil.shortenURL(request.getURL());
+        String url_shortened = UrlUtil.shortenURL(request.getURL());
         log.trace(request.toString());
 //        Find in cache
         Optional<MusicCacheEntry> entry = musicCacheService.getMusicCacheEntry(url_shortened);
@@ -65,9 +65,20 @@ public class MusicQueueController {
         if (entry.isPresent()) {
             MusicCacheEntry cacheEntry = entry.get();
             if (cacheEntry.isBlocked()) {
-                log.info("[{}] Song is blocked and will not be played!", url_shortened);
+                log.info("[{}] {} - {} was not added to queue. Reason: {}",
+                        url_shortened,
+                        cacheEntry.getArtist(),
+                        cacheEntry.getTitle(),
+                        cacheEntry.getBlockReason().getMessage()
+                );
 
-                response.setMessage("Song exceeded allowed play time and will not be added to queue!");
+                response.setMessage(
+                        String.format("%s - %s was not added to queue. Reason: %s",
+                                cacheEntry.getArtist(),
+                                cacheEntry.getTitle(),
+                                cacheEntry.getBlockReason().getMessage()
+                        )
+                );
             } else {
                 if (cacheEntry.getLocalData() == null) {
                     log.error("[{}] Song is not blocked but does not contain any local data!", url_shortened);

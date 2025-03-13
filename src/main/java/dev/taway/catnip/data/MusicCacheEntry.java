@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class MusicCacheEntry {
     private String url;
-//    Will be sorted by url shortened for faster look-up
+    //    Will be sorted by url shortened for faster look-up
     private String urlShortened;
 
     private String title;
@@ -20,6 +20,7 @@ public class MusicCacheEntry {
 //    If blocked do NOT re-download.
 //    Valid reasons for blocking: Duration is over the allowed limit.
     private boolean blocked;
+    private MusicCacheEntryBlockReason blockReason;
 
     private LocalData localData;
 
@@ -31,6 +32,7 @@ public class MusicCacheEntry {
             @JsonProperty("artist") String artist,
             @JsonProperty("duration") double duration,
             @JsonProperty("blocked") boolean blocked,
+            @JsonProperty("blockReason") MusicCacheEntryBlockReason blockReason,
             @JsonProperty("localData") LocalData localData
     ) {
         this.url = url;
@@ -39,6 +41,7 @@ public class MusicCacheEntry {
         this.artist = artist;
         this.duration = duration;
         this.blocked = blocked;
+        this.blockReason = blockReason;
         this.localData = localData;
     }
 
@@ -51,7 +54,7 @@ public class MusicCacheEntry {
         private String path;
 
         private long downloadedTimestamp;
-//        For deleting un-played songs.
+        //        For deleting un-played songs.
         private long lastPlayedTimestamp;
 
         @JsonCreator
