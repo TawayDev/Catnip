@@ -1,4 +1,4 @@
-package dev.taway.catnip.data;
+package dev.taway.catnip.data.music;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class MusicCacheEntry {
     private String url;
-    //    Will be sorted by url shortened for faster look-up
+//    Will be sorted by url shortened for faster look-up
     private String urlShortened;
 
     private String title;
@@ -18,7 +18,6 @@ public class MusicCacheEntry {
     private double duration;
 
 //    If blocked do NOT re-download.
-//    Valid reasons for blocking: Duration is over the allowed limit.
     private boolean blocked;
     private MusicCacheEntryBlockReason blockReason;
 

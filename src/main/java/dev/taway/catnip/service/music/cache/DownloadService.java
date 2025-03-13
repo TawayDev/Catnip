@@ -1,8 +1,8 @@
-package dev.taway.catnip.service.music;
+package dev.taway.catnip.service.music.cache;
 
 import dev.taway.catnip.config.CatnipConfig;
-import dev.taway.catnip.data.MusicCacheEntry;
-import dev.taway.catnip.data.MusicCacheEntryBlockReason;
+import dev.taway.catnip.data.music.MusicCacheEntry;
+import dev.taway.catnip.data.music.MusicCacheEntryBlockReason;
 import dev.taway.catnip.service.file.FileWatchService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

@@ -1,12 +1,13 @@
 package dev.taway.catnip.controller;
 
 import dev.taway.catnip.config.CatnipConfig;
-import dev.taway.catnip.data.MusicCacheEntry;
+import dev.taway.catnip.data.music.MusicCacheEntry;
 import dev.taway.catnip.dto.request.music.MusicQueueRequest;
 import dev.taway.catnip.dto.response.BasicResponse;
 import dev.taway.catnip.service.PermissionService;
-import dev.taway.catnip.service.music.MusicCacheService;
-import dev.taway.catnip.service.music.UrlUtil;
+import dev.taway.catnip.service.music.cache.MusicCacheService;
+import dev.taway.catnip.service.music.cache.UrlUtil;
+import dev.taway.catnip.service.music.queue.MusicQueueService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import org.apache.logging.log4j.LogManager;
@@ -25,12 +26,14 @@ import java.util.Optional;
 public class MusicQueueController {
     private static final Logger log = LogManager.getLogger(MusicQueueController.class);
     private MusicCacheService musicCacheService;
+    private MusicQueueService musicQueueService;
     private PermissionService permissionService;
     private CatnipConfig catnipConfig;
 
     @Autowired
-    public MusicQueueController(MusicCacheService musicCacheService, PermissionService permissionService, CatnipConfig catnipConfig) {
+    public MusicQueueController(MusicCacheService musicCacheService, MusicQueueService musicQueueService, PermissionService permissionService, CatnipConfig catnipConfig) {
         this.musicCacheService = musicCacheService;
+        this.musicQueueService = musicQueueService;
         this.permissionService = permissionService;
         this.catnipConfig = catnipConfig;
     }
@@ -86,21 +89,24 @@ public class MusicQueueController {
                     response.setError(true);
                     response.setMessage("Internal error occurred!");
                 } else {
-//                    TODO: add to queue
-                    double playedInXMinutes = 0; // TODO: Calculate "played in x minutes" time
+//                    Get time to play the song
+                    String playingIn = musicQueueService.queueEmptyInAsString();
+//                    Add to queue
+                    musicQueueService.addToQueue(cacheEntry);
+
                     response.setMessage(
                             String.format(
-                                    "Added %s - %s to queue! Playing in ~%s minutes.",
+                                    "Added %s - %s to queue! Playing in ~%s",
                                     cacheEntry.getArtist(),
                                     cacheEntry.getTitle(),
-                                    playedInXMinutes
+                                    playingIn
                             )
                     );
-                    log.info("[{}] Added {} - {} to queue. Will be played in ~{} minutes.",
+                    log.info("[{}] Added {} - {} to queue. Will be played in ~{}",
                             url_shortened,
                             cacheEntry.getArtist(),
                             cacheEntry.getTitle(),
-                            playedInXMinutes
+                            playingIn
                     );
                 }
             }

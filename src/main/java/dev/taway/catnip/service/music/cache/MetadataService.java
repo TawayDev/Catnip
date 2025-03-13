@@ -1,8 +1,8 @@
-package dev.taway.catnip.service.music;
+package dev.taway.catnip.service.music.cache;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import dev.taway.catnip.data.MusicCacheEntry;
+import dev.taway.catnip.data.music.MusicCacheEntry;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.stereotype.Service;

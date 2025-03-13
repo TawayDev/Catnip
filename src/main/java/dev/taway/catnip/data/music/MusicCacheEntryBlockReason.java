@@ -1,4 +1,4 @@
-package dev.taway.catnip.data;
+package dev.taway.catnip.data.music;
 
 import lombok.Getter;
 

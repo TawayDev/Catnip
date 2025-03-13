@@ -1,7 +1,7 @@
-package dev.taway.catnip.service.music;
+package dev.taway.catnip.service.music.cache;
 
 import dev.taway.catnip.config.CatnipConfig;
-import dev.taway.catnip.data.MusicCacheEntry;
+import dev.taway.catnip.data.music.MusicCacheEntry;
 import dev.taway.catnip.util.CacheDataHandler;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
