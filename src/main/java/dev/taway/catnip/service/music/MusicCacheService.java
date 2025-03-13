@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.taway.catnip.config.CatnipConfig;
 import dev.taway.catnip.data.MusicCacheEntry;
 import dev.taway.catnip.service.file.FileWatchService;
+import dev.taway.catnip.util.CacheDataHandler;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import org.apache.logging.log4j.LogManager;
@@ -14,10 +15,12 @@ import org.springframework.stereotype.Service;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.IOException;
 import java.io.InputStreamReader;
 import java.text.Normalizer;
-import java.util.*;
+import java.util.AbstractMap;
+import java.util.ArrayList;
+import java.util.Map;
+import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -27,7 +30,7 @@ public class MusicCacheService {
     private CatnipConfig config;
     private FileWatchService fileWatchService;
 
-    private static final String MUSIC_CACHE_JSON_PATH = "/cache/music-cache.json";
+    private static final String PATH = "/cache/music-cache.json";
     private final String FILE_CACHE_LOCATION = System.getProperty("user.dir") + "/cache/music/download/";
     private ArrayList<MusicCacheEntry> cacheEntries;
 
@@ -39,24 +42,8 @@ public class MusicCacheService {
 
     @PostConstruct
     public void init() {
-        File cacheFile = new File(System.getProperty("user.dir") + MUSIC_CACHE_JSON_PATH);
-        if (!cacheFile.exists()) {
-            log.warn("Music cache json was not loaded as it does not exist!");
-            cacheEntries = new ArrayList<>();
-            return;
-        }
-
-        try {
-            ObjectMapper objectMapper = new ObjectMapper();
-            MusicCacheEntry[] entries = objectMapper.readValue(new File(System.getProperty("user.dir") + MUSIC_CACHE_JSON_PATH), MusicCacheEntry[].class);
-
-            cacheEntries = new ArrayList<>(Arrays.asList(entries));
-
-            log.info("Successfully loaded {} music cache entries", cacheEntries.size());
-        } catch (IOException e) {
-            log.error("Error while reading music cache JSON! {}", e.getMessage());
-            cacheEntries = new ArrayList<>();
-        }
+        CacheDataHandler<MusicCacheEntry> cacheDataHandler = new CacheDataHandler<>(MusicCacheEntry.class);
+        cacheEntries = cacheDataHandler.load(PATH);
 //        TODO: Remove songs that have not been played for a long time
 //        Cleanup entries after loading
         cleanupCacheEntries();
@@ -444,14 +431,7 @@ public class MusicCacheService {
     public void destroy() {
 //        Cleanup entries before saving
         cleanupCacheEntries();
-
-        ObjectMapper objectMapper = new ObjectMapper();
-
-        try {
-            objectMapper.writeValue(new File(System.getProperty("user.dir") + MUSIC_CACHE_JSON_PATH), cacheEntries);
-            log.info("Music cache saved successfully!");
-        } catch (IOException e) {
-            log.error("An error occurred while trying to save music cache to file! {}", e.getMessage());
-        }
+        CacheDataHandler<MusicCacheEntry> cacheDataHandler = new CacheDataHandler<>(MusicCacheEntry.class);
+        cacheDataHandler.save(PATH, cacheEntries);
     }
 }

@@ -1,8 +1,8 @@
 package dev.taway.catnip.service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.taway.catnip.data.DeathCountEntry;
 import dev.taway.catnip.dto.request.death.DeathCounterRequest;
+import dev.taway.catnip.util.CacheDataHandler;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import lombok.Getter;
@@ -10,10 +10,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.stereotype.Service;
 
-import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Optional;
 
 @Service
@@ -26,24 +23,8 @@ public class DeathCounterService {
 
     @PostConstruct
     private void init() {
-        File deathCounterFile = new File(System.getProperty("user.dir") + PATH);
-        if (!deathCounterFile.exists()) {
-            log.warn("Death counter json was not loaded as it does not exist!");
-            return;
-        }
-
-        ObjectMapper objectMapper = new ObjectMapper();
-
-        try {
-            DeathCountEntry[] deathCountEntries = objectMapper.readValue(new File(System.getProperty("user.dir") + PATH), DeathCountEntry[].class);
-
-            deathCounter = new ArrayList<>(Arrays.asList(deathCountEntries));
-
-            log.info("Successfully loaded {} death counter entries", deathCounter.size());
-        } catch (IOException e) {
-            log.error("Error while reading death counter JSON! {}", e.getMessage());
-            deathCounter = new ArrayList<>();
-        }
+        CacheDataHandler<DeathCountEntry> cacheDataHandler = new CacheDataHandler<>(DeathCountEntry.class);
+        deathCounter = cacheDataHandler.load(PATH);
     }
 
     private void validateEntryExistence(String gameName) {
@@ -95,13 +76,7 @@ public class DeathCounterService {
 
     @PreDestroy
     private void destroy() {
-        ObjectMapper objectMapper = new ObjectMapper();
-
-        try {
-            objectMapper.writeValue(new File(System.getProperty("user.dir") + PATH), deathCounter);
-            log.info("Death counter saved successfully!");
-        } catch (IOException e) {
-            log.error("An error occurred while trying to save death counter to file! {}", e.getMessage());
-        }
+        CacheDataHandler<DeathCountEntry> cacheDataHandler = new CacheDataHandler<>(DeathCountEntry.class);
+        cacheDataHandler.save(PATH, deathCounter);
     }
 }

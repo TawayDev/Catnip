@@ -1,11 +1,10 @@
 package dev.taway.catnip.service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.taway.catnip.config.PermissionLevel;
 import dev.taway.catnip.data.UserBlacklistEntry;
 import dev.taway.catnip.dto.request.BasicRequest;
-import dev.taway.catnip.dto.request.music.MusicQueueRequest;
 import dev.taway.catnip.dto.response.BasicResponse;
+import dev.taway.catnip.util.CacheDataHandler;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import org.apache.logging.log4j.LogManager;
@@ -13,11 +12,8 @@ import org.apache.logging.log4j.Logger;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
-import java.io.File;
-import java.io.IOException;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Arrays;
 
 @Service
 public class PermissionService {
@@ -27,24 +23,8 @@ public class PermissionService {
 
     @PostConstruct
     private void init() {
-        File blacklistFile = new File(System.getProperty("user.dir") + PATH);
-        if (!blacklistFile.exists()) {
-            log.warn("User blacklist json was not loaded as it does not exist!");
-            return;
-        }
-
-        ObjectMapper objectMapper = new ObjectMapper();
-
-        try {
-            UserBlacklistEntry[] blacklistEntries = objectMapper.readValue(new File(System.getProperty("user.dir") + PATH), UserBlacklistEntry[].class);
-
-            userBlacklist = new ArrayList<>(Arrays.asList(blacklistEntries));
-
-            log.info("Successfully loaded {} user blacklist entries", userBlacklist.size());
-        } catch (IOException e) {
-            log.error("Error while reading user blacklist JSON! {}", e.getMessage());
-            userBlacklist = new ArrayList<>();
-        }
+        CacheDataHandler<UserBlacklistEntry> cacheDataHandler = new CacheDataHandler<>(UserBlacklistEntry.class);
+        userBlacklist = cacheDataHandler.load(PATH);
     }
 
     /**
@@ -178,13 +158,7 @@ public class PermissionService {
 
     @PreDestroy
     private void destroy() {
-        ObjectMapper objectMapper = new ObjectMapper();
-
-        try {
-            objectMapper.writeValue(new File(System.getProperty("user.dir") + PATH), userBlacklist);
-            log.info("User blacklist saved successfully!");
-        } catch (IOException e) {
-            log.error("An error occurred while trying to save user blacklist to file! {}", e.getMessage());
-        }
+        CacheDataHandler<UserBlacklistEntry> cacheDataHandler = new CacheDataHandler<>(UserBlacklistEntry.class);
+        cacheDataHandler.save(PATH, userBlacklist);
     }
 }
