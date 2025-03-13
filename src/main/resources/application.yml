@@ -1,5 +1,9 @@
 # Catnip config
 catnip:
+# To play 18+ songs/videos you must log in to your verified adult account on your browser and select which one you use below.
+# Supported options: BRAVE, CHROME, CHROMIUM, EDGE, FIREFOX, OPERA, SAFARI, VIVALDI, WHALE
+# If you do not have this option select NONE
+  cookiesFromBrowser: FIREFOX
   permission:
     deathCountManagement: VIP
 #    Permission level: ALL -> SUB -> VIP -> MOD -> STREAMER

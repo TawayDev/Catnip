@@ -2,9 +2,12 @@ package dev.taway.catnip.service.music.cache;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import dev.taway.catnip.config.CatnipConfig;
+import dev.taway.catnip.config.CookiesFromBrowser;
 import dev.taway.catnip.data.music.MusicCacheEntry;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.AbstractMap;
@@ -15,6 +18,12 @@ import java.util.Map;
 public class MetadataService {
 
     private static final Logger log = LogManager.getLogger(MetadataService.class);
+    private CatnipConfig config;
+
+    @Autowired
+    public MetadataService(CatnipConfig config) {
+        this.config = config;
+    }
 
     /**
      * Fetches metadata for a given URL using an external process (yt-dlp) and returns a MusicCacheEntry object.
@@ -36,11 +45,21 @@ public class MetadataService {
     }
 
     private ProcessBuilder createMetadataProcess(String url) {
-        return new ProcessBuilder(
-                "yt-dlp",
-                "--print", "{\\\"title\\\": %(title)j, \\\"channel\\\": %(channel)j, \\\"duration\\\": %(duration)j}",
-                url
-        );
+        if (config.getCookiesFromBrowser().equals(CookiesFromBrowser.NONE)) {
+            return new ProcessBuilder(
+                    "yt-dlp",
+                    "--print", "{\\\"title\\\": %(title)j, \\\"channel\\\": %(channel)j, \\\"duration\\\": %(duration)j}",
+                    url
+            );
+        } else {
+            return new ProcessBuilder(
+                    "yt-dlp",
+                    "--print", "{\\\"title\\\": %(title)j, \\\"channel\\\": %(channel)j, \\\"duration\\\": %(duration)j}",
+                    "--cookies-from-browser",
+                    config.getCookiesFromBrowser().getName(),
+                    url
+            );
+        }
     }
 
     private MusicCacheEntry parseMetadata(AbstractMap.SimpleEntry<ArrayList<String>, ArrayList<String>> processOutput) {

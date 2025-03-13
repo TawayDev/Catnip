@@ -8,6 +8,8 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 @ConfigurationProperties(prefix = "catnip")
 public class CatnipConfig {
+
+    private CookiesFromBrowser cookiesFromBrowser;
     private Cache cache;
     private Permission permission;
 

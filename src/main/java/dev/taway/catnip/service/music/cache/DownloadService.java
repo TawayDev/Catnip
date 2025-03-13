@@ -1,6 +1,7 @@
 package dev.taway.catnip.service.music.cache;
 
 import dev.taway.catnip.config.CatnipConfig;
+import dev.taway.catnip.config.CookiesFromBrowser;
 import dev.taway.catnip.data.music.MusicCacheEntry;
 import dev.taway.catnip.data.music.MusicCacheEntryBlockReason;
 import dev.taway.catnip.service.file.FileWatchService;
@@ -75,14 +76,27 @@ public class DownloadService {
     }
 
     private ProcessBuilder createDownloadProcess(String url) {
-        return new ProcessBuilder(
-                "yt-dlp",
-                "-f", "bestaudio[ext=m4a]/bestaudio[ext=mp3]",
-                "--audio-format", "mp3",
-                "-P", FILE_CACHE_LOCATION,
-                "-o", "%(title)s.%(ext)s",
-                url
-        );
+        if (config.getCookiesFromBrowser().equals(CookiesFromBrowser.NONE)) {
+            return new ProcessBuilder(
+                    "yt-dlp",
+                    "-f", "bestaudio[ext=m4a]/bestaudio[ext=mp3]",
+                    "--audio-format", "mp3",
+                    "-P", FILE_CACHE_LOCATION,
+                    "-o", "%(title)s.%(ext)s",
+                    url
+            );
+        } else {
+            return new ProcessBuilder(
+                    "yt-dlp",
+                    "-f", "bestaudio[ext=m4a]/bestaudio[ext=mp3]",
+                    "--audio-format", "mp3",
+                    "-P", FILE_CACHE_LOCATION,
+                    "-o", "%(title)s.%(ext)s",
+                    "--cookies-from-browser",
+                    config.getCookiesFromBrowser().getName(),
+                    url
+            );
+        }
     }
 
     private AbstractMap.SimpleEntry<MusicCacheEntry.LocalData, Boolean> parseDownloadOutput(
