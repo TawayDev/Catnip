@@ -23,13 +23,14 @@ public class CatnipConfig {
     @Data
     public static class Permission {
         private Music music;
-        private DeathCount deathCount;
+        private PermissionLevel deathCountManagement;
 
         @Data
         public static class Music {
             private UserAction userAction;
 
             private PermissionLevel request;
+            private PermissionLevel remove;
             private PermissionLevel removeLastSelf;
             private PermissionLevel voteSkip;
             private PermissionLevel forceSkip;
@@ -39,12 +40,6 @@ public class CatnipConfig {
             public static class UserAction {
                 private PermissionLevel blacklistUser;
             }
-        }
-
-        @Data
-        public static class DeathCount {
-            private PermissionLevel add;
-            private PermissionLevel subtract;
         }
     }
 }

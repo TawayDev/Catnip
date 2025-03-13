@@ -2,6 +2,7 @@ package dev.taway.catnip.controller;
 
 import dev.taway.catnip.config.CatnipConfig;
 import dev.taway.catnip.dto.request.death.DeathCounterRequest;
+import dev.taway.catnip.dto.response.BasicResponse;
 import dev.taway.catnip.dto.response.DeathCounterResponse;
 import dev.taway.catnip.service.DeathCounterService;
 import dev.taway.catnip.service.PermissionService;
@@ -16,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.Objects;
 import java.util.Optional;
 
 @RestController
@@ -39,19 +41,12 @@ public class DeathCounterController {
     @ApiResponse(responseCode = "401", description = "UserAction requesting this does not have the necessary permissions")
     @PostMapping("/add")
     public ResponseEntity<DeathCounterResponse> add(@RequestBody DeathCounterRequest request) {
-        if (!permissionService.canRequest(request, catnipConfig.getPermission().getDeathCount().getAdd())) {
-            log.info(
-                    "Death counter add request rejected. Insufficient permissions. <{}> Required: {} but has [Streamer: {}, Mod: {}, VIP: {}, Subscriber: {}]",
-                    request.getUsername(),
-                    catnipConfig.getPermission().getDeathCount().getAdd(),
-                    request.isStreamer(),
-                    request.isMod(),
-                    request.isVIP(),
-                    request.isSubscriber()
-            );
+//        Check if user can request
+        ResponseEntity<BasicResponse> response = permissionService.validateUserRequest(request, catnipConfig.getPermission().getDeathCountManagement(), false);
+        if (response.getStatusCode().is4xxClientError()) {
             return ResponseEntity.status(401).body(new DeathCounterResponse(
-                    true,
-                    "You do not have the necessary permissions to perform this action.",
+                    Objects.requireNonNull(response.getBody()).isError(),
+                    response.getBody().getMessage(),
                     -1
             ));
         }
@@ -70,19 +65,12 @@ public class DeathCounterController {
     @ApiResponse(responseCode = "401", description = "User requesting this does not have the necessary permissions")
     @PostMapping("/subtract")
     public ResponseEntity<DeathCounterResponse> subtract(@RequestBody DeathCounterRequest request) {
-        if (!permissionService.canRequest(request, catnipConfig.getPermission().getDeathCount().getSubtract())) {
-            log.info(
-                    "Death counter subtract request rejected. Insufficient permissions. <{}> Required: {} but has [Streamer: {}, Mod: {}, VIP: {}, Subscriber: {}]",
-                    request.getUsername(),
-                    catnipConfig.getPermission().getDeathCount().getSubtract(),
-                    request.isStreamer(),
-                    request.isMod(),
-                    request.isVIP(),
-                    request.isSubscriber()
-            );
+//        Check if user can request
+        ResponseEntity<BasicResponse> response = permissionService.validateUserRequest(request, catnipConfig.getPermission().getDeathCountManagement(), false);
+        if (response.getStatusCode().is4xxClientError()) {
             return ResponseEntity.status(401).body(new DeathCounterResponse(
-                    true,
-                    "You do not have the necessary permissions to perform this action.",
+                    Objects.requireNonNull(response.getBody()).isError(),
+                    response.getBody().getMessage(),
                     -1
             ));
         }

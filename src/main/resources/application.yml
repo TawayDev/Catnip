@@ -1,18 +1,17 @@
 # Catnip config
 catnip:
   permission:
+    deathCountManagement: VIP
 #    Permission level: ALL -> SUB -> VIP -> MOD -> STREAMER
     music:
         request: ALL
+        remove: MOD
         removeLastSelf: ALL
         voteSkip: ALL
         forceSkip: MOD
         blacklist: MOD
         userAction:
           blacklistUser: MOD
-    deathCount:
-      add: VIP
-      subtract: VIP
 
   cache:
     maximumSongDurationSeconds: 420

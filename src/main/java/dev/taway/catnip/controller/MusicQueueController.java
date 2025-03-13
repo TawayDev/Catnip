@@ -40,24 +40,15 @@ public class MusicQueueController {
     @ApiResponse(responseCode = "500", description = "An error has occurred somewhere during song download. CHECK LOGS!")
     @PostMapping("/add")
     public ResponseEntity<BasicResponse> addToQueue(@RequestBody MusicQueueRequest request) {
-        if (!permissionService.canRequest(request, catnipConfig.getPermission().getMusic().getRequest())) {
-            log.info(
-                    "Death counter add request rejected. Insufficient permissions. <{}> Required: {} but has [Streamer: {}, Mod: {}, VIP: {}, Subscriber: {}]",
-                    request.getUsername(),
-                    catnipConfig.getPermission().getDeathCount().getAdd(),
-                    request.isStreamer(),
-                    request.isMod(),
-                    request.isVIP(),
-                    request.isSubscriber()
-            );
-            return ResponseEntity.status(401).body(new BasicResponse(
-                    true,
-                    "You do not have the necessary permissions to perform this action."
-            ));
+//        Check if user can request
+        ResponseEntity<BasicResponse> r = permissionService.validateUserRequest(request, catnipConfig.getPermission().getMusic().getRequest(), true);
+        if (r.getStatusCode().is4xxClientError()) {
+            return r;
         }
-//        TODO: check if user is on blacklist
+
 //        TODO: check if link is playlist. remove playlist part from it.
 //        TODO: remove ?si= from URL!!!!
+
         BasicResponse response = new BasicResponse();
         String url_shortened = musicCacheService.shortenURL(request.getURL());
         log.trace(request.toString());
@@ -109,20 +100,10 @@ public class MusicQueueController {
 
     @PostMapping("/remove")
     public ResponseEntity<BasicResponse> removeFromQueue(@RequestBody MusicQueueRequest request) {
-        if (!permissionService.canRequest(request, catnipConfig.getPermission().getMusic().getRequest())) {
-            log.info(
-                    "Remove specific song request rejected. Insufficient permissions. <{}> Required: {} but has [Streamer: {}, Mod: {}, VIP: {}, Subscriber: {}]",
-                    request.getUsername(),
-                    catnipConfig.getPermission().getDeathCount().getAdd(),
-                    request.isStreamer(),
-                    request.isMod(),
-                    request.isVIP(),
-                    request.isSubscriber()
-            );
-            return ResponseEntity.status(401).body(new BasicResponse(
-                    true,
-                    "You do not have the necessary permissions to perform this action."
-            ));
+//        Check if user can request
+        ResponseEntity<BasicResponse> response = permissionService.validateUserRequest(request, catnipConfig.getPermission().getMusic().getRemove(), true);
+        if (response.getStatusCode().is4xxClientError()) {
+            return response;
         }
 
 //        TODO: remove from queue
@@ -132,20 +113,10 @@ public class MusicQueueController {
 
     @PostMapping("/remove/last-self")
     public ResponseEntity<BasicResponse> removeFromQueueLastSongFromUser(@RequestBody MusicQueueRequest request) {
-        if (!permissionService.canRequest(request, catnipConfig.getPermission().getMusic().getRemoveLastSelf())) {
-            log.info(
-                    "Remove last song from self request rejected. Insufficient permissions. <{}> Required: {} but has [Streamer: {}, Mod: {}, VIP: {}, Subscriber: {}]",
-                    request.getUsername(),
-                    catnipConfig.getPermission().getDeathCount().getAdd(),
-                    request.isStreamer(),
-                    request.isMod(),
-                    request.isVIP(),
-                    request.isSubscriber()
-            );
-            return ResponseEntity.status(401).body(new BasicResponse(
-                    true,
-                    "You do not have the necessary permissions to perform this action."
-            ));
+//        Check if user can request
+        ResponseEntity<BasicResponse> response = permissionService.validateUserRequest(request, catnipConfig.getPermission().getMusic().getRemoveLastSelf(), true);
+        if (response.getStatusCode().is4xxClientError()) {
+            return response;
         }
 
 //        TODO: remove last song submitted by user (sort by timestamp)

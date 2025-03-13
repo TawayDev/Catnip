@@ -4,10 +4,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.taway.catnip.config.PermissionLevel;
 import dev.taway.catnip.data.UserBlacklistEntry;
 import dev.taway.catnip.dto.request.BasicRequest;
+import dev.taway.catnip.dto.request.music.MusicQueueRequest;
+import dev.taway.catnip.dto.response.BasicResponse;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
@@ -138,6 +141,39 @@ public class PermissionService {
         if (request.isVIP()) return PermissionLevel.VIP;
         if (request.isSubscriber()) return PermissionLevel.SUB;
         return PermissionLevel.ALL;
+    }
+
+    public ResponseEntity<BasicResponse> validateUserRequest(BasicRequest request, PermissionLevel requiredPermissionLevel, boolean checkBlacklist) {
+        if (canRequest(request, requiredPermissionLevel)) {
+            log.info(
+                    "API request rejected. Insufficient permissions. <{}> Required: {} but has [Streamer: {}, Mod: {}, VIP: {}, Subscriber: {}]",
+                    request.getUsername(),
+                    requiredPermissionLevel,
+                    request.isStreamer(),
+                    request.isMod(),
+                    request.isVIP(),
+                    request.isSubscriber()
+            );
+            return ResponseEntity.status(401).body(new BasicResponse(
+                    true,
+                    "You do not have the necessary permissions to perform this action."
+            ));
+        }
+
+        if (checkBlacklist) {
+//            Nested, not && because isBlacklisted searches an array which could be expensive.
+            if (isBlacklisted(request.getUsername())) {
+                log.info(
+                        "API request rejected. User \"{}\" is blacklisted.",
+                        request.getUsername()
+                );
+                return ResponseEntity.status(401).body(new BasicResponse(
+                        true,
+                        "You are not allowed to perform this action. [Reason: Blacklisted]"
+                ));
+            }
+        }
+        return ResponseEntity.ok(new BasicResponse());
     }
 
     @PreDestroy

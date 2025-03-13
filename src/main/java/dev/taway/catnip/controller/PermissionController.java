@@ -33,19 +33,10 @@ public class PermissionController {
     @ApiResponse(responseCode = "401", description = "User requesting this does not have the necessary permissions")
     @PostMapping("/blacklist/add")
     public ResponseEntity<BasicResponse> addToBlacklist(@RequestBody BlacklistRequest request) {
-        if(!permissionService.canRequest(request, catnipConfig.getPermission().getMusic().getUserAction().getBlacklistUser())) {
-            log.info(
-                    "Blacklist user request rejected. Insufficient permissions. <{}> Required: {} but has [Streamer: {}, Mod: {}, VIP: {}, Subscriber: {}]",
-                    request.getUsername(),
-                    catnipConfig.getPermission().getMusic().getUserAction().getBlacklistUser(),
-                    request.isStreamer(),
-                    request.isMod(),
-                    request.isVIP(),
-                    request.isSubscriber()
-            );
-            return ResponseEntity.status(401).body(
-                    new BasicResponse(true, "You do not have the necessary permissions to perform this action.")
-            );
+//        Check if user can request
+        ResponseEntity<BasicResponse> response = permissionService.validateUserRequest(request, catnipConfig.getPermission().getMusic().getUserAction().getBlacklistUser(), false);
+        if (response.getStatusCode().is4xxClientError()) {
+            return response;
         }
 
         String message = permissionService.blacklistUser(request.getBlacklistUsername(), request.getUsername(), request.getExpiresInDays());
@@ -61,19 +52,10 @@ public class PermissionController {
     @ApiResponse(responseCode = "401", description = "User requesting this does not have the necessary permissions")
     @PostMapping("/blacklist/remove")
     public ResponseEntity<BasicResponse> removeFromBlacklist(@RequestBody BlacklistRequest request) {
-        if(!permissionService.canRequest(request, catnipConfig.getPermission().getMusic().getUserAction().getBlacklistUser())) {
-            log.info(
-                    "Unblacklist user request rejected. Insufficient permissions. <{}> Required: {} but has [Streamer: {}, Mod: {}, VIP: {}, Subscriber: {}]",
-                    request.getUsername(),
-                    catnipConfig.getPermission().getMusic().getUserAction().getBlacklistUser(),
-                    request.isStreamer(),
-                    request.isMod(),
-                    request.isVIP(),
-                    request.isSubscriber()
-            );
-            return ResponseEntity.status(401).body(
-                    new BasicResponse(true, "You do not have the necessary permissions to perform this action.")
-            );
+//        Check if user can request
+        ResponseEntity<BasicResponse> response = permissionService.validateUserRequest(request, catnipConfig.getPermission().getMusic().getUserAction().getBlacklistUser(), false);
+        if (response.getStatusCode().is4xxClientError()) {
+            return response;
         }
 
         String message = permissionService.unblacklistUser(request.getBlacklistUsername());
