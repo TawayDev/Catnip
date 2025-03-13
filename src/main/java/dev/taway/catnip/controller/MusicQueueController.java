@@ -6,6 +6,7 @@ import dev.taway.catnip.dto.request.music.MusicQueueRequest;
 import dev.taway.catnip.dto.response.BasicResponse;
 import dev.taway.catnip.service.PermissionService;
 import dev.taway.catnip.service.music.MusicCacheService;
+import dev.taway.catnip.service.music.UrlShortenerUtil;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import org.apache.logging.log4j.LogManager;
@@ -50,7 +51,7 @@ public class MusicQueueController {
 //        TODO: remove ?si= from URL!!!!
 
         BasicResponse response = new BasicResponse();
-        String url_shortened = musicCacheService.shortenURL(request.getURL());
+        String url_shortened = UrlShortenerUtil.shortenURL(request.getURL());
         log.trace(request.toString());
 //        Find in cache
         Optional<MusicCacheEntry> entry = musicCacheService.getMusicCacheEntry(url_shortened);
@@ -75,13 +76,20 @@ public class MusicQueueController {
                     response.setMessage("Internal error occurred!");
                 } else {
 //                    TODO: add to queue
+                    double playedInXMinutes = 0; // TODO: Calculate "played in x minutes" time
                     response.setMessage(
                             String.format(
-                                    "Added %s - %s to queue! Playing in ~%d minutes",
+                                    "Added %s - %s to queue! Playing in ~%s minutes.",
                                     cacheEntry.getArtist(),
                                     cacheEntry.getTitle(),
-                                    0 // TODO: format this in minutes
+                                    playedInXMinutes
                             )
+                    );
+                    log.info("[{}] Added {} - {} to queue. Will be played in ~{} minutes.",
+                            url_shortened,
+                            cacheEntry.getArtist(),
+                            cacheEntry.getTitle(),
+                            playedInXMinutes
                     );
                 }
             }
@@ -91,7 +99,7 @@ public class MusicQueueController {
         }
 
         if (response.isError()) {
-            musicCacheService.cleanupCacheEntries();
+            musicCacheService.cleanupCache();
             return ResponseEntity.status(500).body(response);
         } else {
             return ResponseEntity.ok(response);
