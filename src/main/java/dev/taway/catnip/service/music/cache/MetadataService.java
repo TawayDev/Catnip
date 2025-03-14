@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.taway.catnip.config.CatnipConfig;
 import dev.taway.catnip.config.CookiesFromBrowser;
 import dev.taway.catnip.data.music.MusicCacheEntry;
+import dev.taway.catnip.data.music.MusicCacheEntryBlockReason;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -66,7 +67,13 @@ public class MetadataService {
         ObjectMapper mapper = new ObjectMapper();
         Map<String, Object> data = null;
 
+        MusicCacheEntry entry = new MusicCacheEntry();
+
         for (String str : processOutput.getKey()) {
+            if (str.contains("Sign in to confirm your age")) {
+                return getAgeRestrictedEntry();
+            }
+
             try {
                 data = mapper.readValue(str, Map.class);
                 if (data.containsKey("title")) break;
@@ -76,6 +83,9 @@ public class MetadataService {
 
         if (data == null || !data.containsKey("title")) {
             for (String str : processOutput.getValue()) {
+                if (str.contains("Sign in to confirm your age")) {
+                    return getAgeRestrictedEntry();
+                }
                 try {
                     data = mapper.readValue(str, Map.class);
                     if (data.containsKey("title")) break;
@@ -88,10 +98,19 @@ public class MetadataService {
             throw new RuntimeException("Metadata extraction failed");
         }
 
-        MusicCacheEntry entry = new MusicCacheEntry();
         entry.setTitle(data.get("title").toString());
         entry.setArtist(data.get("channel").toString());
         entry.setDuration(Double.parseDouble(data.get("duration").toString()));
+        return entry;
+    }
+
+    private MusicCacheEntry getAgeRestrictedEntry() {
+        MusicCacheEntry entry = new MusicCacheEntry();
+        entry.setTitle("N/A");
+        entry.setArtist("N/A");
+        entry.setDuration(0);
+        entry.setBlocked(true);
+        entry.setBlockReason(MusicCacheEntryBlockReason.AGE_RESTRICTED);
         return entry;
     }
 }

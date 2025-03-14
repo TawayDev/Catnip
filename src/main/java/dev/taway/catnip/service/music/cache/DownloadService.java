@@ -55,6 +55,9 @@ public class DownloadService {
     }
 
     private MusicCacheEntry performDownload(MusicCacheEntry entry) {
+//        if it has already been blocked. return.
+        if(entry.isBlocked()) return entry;
+
         try {
             Process process = createDownloadProcess(entry.getUrl()).start();
             AbstractMap.SimpleEntry<ArrayList<String>, ArrayList<String>> output = ProcessOutputUtil.handleProcessOutput(process);

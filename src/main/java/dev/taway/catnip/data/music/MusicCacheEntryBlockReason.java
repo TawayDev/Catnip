@@ -5,7 +5,8 @@ import lombok.Getter;
 @Getter
 public enum MusicCacheEntryBlockReason {
     TOO_LONG("Exceeded allowed play time."),
-    BLACKLISTED("Blacklisted."),;
+    BLACKLISTED("Blacklisted."),
+    AGE_RESTRICTED("Age Restricted.");
 
     final String message;
 
