@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .player-container {
+            position: fixed;
+            bottom: 40px;
+            left: 40px;
+            width: 400px;
+            height: 80px;
+            background: rgba(0, 0, 0, 255);
+            border-radius: 15px;
+            padding: 15px;
+            backdrop-filter: blur(10px);
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            font-family: 'Roboto Mono', monospace;
+        }
+
+        .progress-bar {
+            height: 8px;
+            background: #af3432;
+            border-radius: 4px;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .controls-container {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            height: 40px;
+        }
+
+        .playback-icon {
+            color: white;
+            font-size: 28px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+        }
+
+        .playback-icon i {
+            transition: transform 0.2s ease;
+        }
+
+        .track-info {
+            flex: 1;
+            position: relative;
+            height: 32px;
+            min-width: 200px;
+        }
+
+        .marquee-container {
+            width: 100%;
+            overflow: hidden;
+            white-space: nowrap;
+            position: relative;
+            z-index: 9999;
+        }
+
+        .track-text {
+            color: white;
+            font-size: 20px;
+            line-height: 32px;
+            display: inline-block;
+            /*position: absolute;*/
+            white-space: nowrap;
+            animation: marquee 15s linear infinite;
+            animation-play-state: paused;
+        }
+
+        @keyframes marquee {
+            0% {
+                transform: translateX(100%);
+            }
+            100% {
+                transform: translateX(-100%);
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="player-container">
+    <div class="progress-bar"></div>
+    <div class="controls-container">
+        <div class="playback-icon">
+            <i class="fa-solid fa-play"></i>
+        </div>
+        <div class="track-info">
+            <div class="marquee-container">
+                <span class="track-text">Artist - Title</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const ws = new WebSocket('ws://localhost:8080/api/playback-status');
+
+    ws.onmessage = (event) => {
+        try {
+            const entry = JSON.parse(event.data);
+            console.log(entry)
+            updateUI(entry);
+        } catch (e) {
+            console.error('Failed to parse message:', e);
+        }
+    };
+
+    function updateUI(entry) {
+        // Progress bar update
+        const progress = entry.duration ? (entry.playTime / entry.duration) * 100 : 0;
+        document.querySelector('.progress-bar').style.width = `${progress}%`;
+
+        // Track info update
+        const textElement = document.querySelector('.track-text');
+        const marqueeContainer = document.querySelector('.marquee-container');
+        new ResizeObserver(() => updateMarquee(textElement))
+            .observe(marqueeContainer);
+        const newText = `${entry.artist || 'Unknown Artist'} - ${entry.title || 'Unknown Title'}`;
+        if (textElement.textContent !== newText) {
+            textElement.textContent = newText;
+            updateMarquee(textElement);
+        }
+
+        // Playback icon update
+        const icon = document.querySelector('.playback-icon i');
+        icon.classList.toggle('fa-play', !entry.paused);
+        icon.classList.toggle('fa-pause', entry.paused);
+    }
+
+    function updateMarquee(element) {
+        const containerWidth = element.parentElement.offsetWidth;
+        const textWidth = element.offsetWidth;
+
+        if (textWidth > containerWidth) {
+            // Force restart animation with preserved timing
+            element.style.animation = 'none';
+            void element.offsetWidth; // Trigger reflow
+            element.style.animation = `marquee ${15}s linear infinite`;
+        } else {
+            element.style.animation = 'none';
+        }
+    }
+
+    // Initial marquee setup with ResizeObserver
+    const textElement = document.querySelector('.track-text');
+    new ResizeObserver(() => updateMarquee(textElement))
+        .observe(document.querySelector('.marquee-container'));
+
+    // WebSocket reconnection logic
+    ws.onerror = (e) => {
+        console.error('WebSocket error:', e);
+        ws.close();
+    };
+
+    ws.onclose = () => {
+        setTimeout(() => {
+            console.log('Reconnecting...');
+            window.location.reload();
+        }, 250);
+    };
+</script>
+</body>
+</html>

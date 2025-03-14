@@ -3,6 +3,7 @@ package dev.taway.catnip.service.music.queue;
 import dev.taway.catnip.data.music.MusicCacheEntry;
 import dev.taway.catnip.data.music.MusicQueueEntry;
 import dev.taway.catnip.service.music.util.UrlUtil;
+import dev.taway.catnip.websocket.PlaybackStatusHandler;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -20,6 +21,7 @@ public class MusicQueueService {
     private final PlaybackControlService playbackControl;
     private final QueueDurationService durationService;
     private final MusicQueueCacheService cacheService;
+    private final PlaybackStatusHandler playbackStatusHandler;
 
     /**
      * Constructs the facade with required dependencies.
@@ -33,11 +35,12 @@ public class MusicQueueService {
     public MusicQueueService(MusicQueueManager queueManager,
                              PlaybackControlService playbackControl,
                              QueueDurationService durationService,
-                             MusicQueueCacheService cacheService) {
+                             MusicQueueCacheService cacheService, PlaybackStatusHandler playbackStatusHandler) {
         this.queueManager = queueManager;
         this.playbackControl = playbackControl;
         this.durationService = durationService;
         this.cacheService = cacheService;
+        this.playbackStatusHandler = playbackStatusHandler;
     }
 
     /**
@@ -50,6 +53,7 @@ public class MusicQueueService {
      */
     public void addToQueue(MusicCacheEntry entry, double playTime, boolean paused, boolean fromBackup) {
         queueManager.addToQueue(entry, playTime, paused, fromBackup);
+        getCurrentlyPlaying().ifPresent(playbackStatusHandler::broadcastStatus);
     }
 
     /**
@@ -59,6 +63,7 @@ public class MusicQueueService {
      */
     public void addToQueue(MusicCacheEntry entry) {
         queueManager.addToQueue(entry);
+        getCurrentlyPlaying().ifPresent(playbackStatusHandler::broadcastStatus);
     }
 
     /**
@@ -68,6 +73,7 @@ public class MusicQueueService {
      */
     public void addToQueue(MusicQueueEntry entry) {
         queueManager.addToQueue(entry);
+        getCurrentlyPlaying().ifPresent(playbackStatusHandler::broadcastStatus);
     }
 
     /**
@@ -77,6 +83,7 @@ public class MusicQueueService {
      */
     public void removeFromQueue(String url) {
         queueManager.removeFromQueue(url);
+        getCurrentlyPlaying().ifPresent(playbackStatusHandler::broadcastStatus);
     }
 
     /**
@@ -86,6 +93,7 @@ public class MusicQueueService {
      */
     public void removeFromQueue(int position) {
         queueManager.removeFromQueue(position);
+        getCurrentlyPlaying().ifPresent(playbackStatusHandler::broadcastStatus);
     }
 
     /**
@@ -95,6 +103,7 @@ public class MusicQueueService {
      */
     public void removeFromQueue(MusicQueueEntry entry) {
         queueManager.getQueueEntries().remove(entry);
+        getCurrentlyPlaying().ifPresent(playbackStatusHandler::broadcastStatus);
     }
 
     /**
@@ -115,6 +124,7 @@ public class MusicQueueService {
      */
     public void pause() {
         playbackControl.pause();
+        getCurrentlyPlaying().ifPresent(playbackStatusHandler::broadcastStatus);
     }
 
     /**
@@ -122,6 +132,7 @@ public class MusicQueueService {
      */
     public void play() {
         playbackControl.play();
+        getCurrentlyPlaying().ifPresent(playbackStatusHandler::broadcastStatus);
     }
 
     /**
@@ -129,6 +140,7 @@ public class MusicQueueService {
      */
     public void skip() {
         playbackControl.skip();
+        getCurrentlyPlaying().ifPresent(playbackStatusHandler::broadcastStatus);
     }
 
     /**
@@ -184,5 +196,6 @@ public class MusicQueueService {
             queueManager.removeFromQueue(0);
             queueManager.addToQueue(entry, 0, current.isPaused(), current.isFromBackupPlaylist());
         });
+        getCurrentlyPlaying().ifPresent(playbackStatusHandler::broadcastStatus);
     }
 }
