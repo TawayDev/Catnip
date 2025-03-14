@@ -35,7 +35,7 @@ public class CatnipConfig {
             private PermissionLevel remove;
             private PermissionLevel removeLastSelf;
             private PermissionLevel voteSkip;
-            private PermissionLevel forceSkip;
+            private PermissionLevel musicControls;
             private PermissionLevel blacklist;
 
             @Data

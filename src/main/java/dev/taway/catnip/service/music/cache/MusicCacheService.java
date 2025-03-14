@@ -1,6 +1,7 @@
 package dev.taway.catnip.service.music.cache;
 
 import dev.taway.catnip.data.music.MusicCacheEntry;
+import dev.taway.catnip.service.music.util.UrlUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 

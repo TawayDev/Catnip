@@ -1,4 +1,4 @@
-package dev.taway.catnip.service.music.cache;
+package dev.taway.catnip.service.music.util;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;

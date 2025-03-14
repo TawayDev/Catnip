@@ -1,159 +1,188 @@
 package dev.taway.catnip.service.music.queue;
 
-import dev.taway.catnip.config.CatnipConfig;
 import dev.taway.catnip.data.music.MusicCacheEntry;
 import dev.taway.catnip.data.music.MusicQueueEntry;
-import dev.taway.catnip.util.CacheDataHandler;
-import jakarta.annotation.PostConstruct;
-import jakarta.annotation.PreDestroy;
-import lombok.Getter;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import dev.taway.catnip.service.music.util.UrlUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
+import java.util.Optional;
 
+/**
+ * Facade service providing unified access to music queue operations. Delegates to specialized
+ * services for playback control, duration calculations, persistence, and queue management.
+ * Maintains queue state through cache persistence and provides backward compatibility
+ * with the original MusicQueueService interface.
+ */
 @Service
 public class MusicQueueService {
-    private static final Logger log = LogManager.getLogger(MusicQueueService.class);
-    private static final String PATH = "/cache/music-queue.json";
-    private final CatnipConfig config;
-    private final CacheDataHandler<MusicQueueEntry> cacheDataHandler;
+    private final MusicQueueManager queueManager;
+    private final PlaybackControlService playbackControl;
+    private final QueueDurationService durationService;
+    private final MusicQueueCacheService cacheService;
 
-    @Getter
-    private ArrayList<MusicQueueEntry> queueEntries = new ArrayList<>();
-
+    /**
+     * Constructs the facade with required dependencies.
+     *
+     * @param queueManager    Core queue management service
+     * @param playbackControl Playback control service
+     * @param durationService Queue duration calculation service
+     * @param cacheService    Cache persistence service
+     */
     @Autowired
-    public MusicQueueService(CatnipConfig config) {
-        this.config = config;
-        this.cacheDataHandler = new CacheDataHandler<>(MusicQueueEntry.class);
-    }
-
-    @PostConstruct
-    public void init() {
-//        TODO: index "/cache/music/backup-playlist/" on init
-        loadCache();
-    }
-
-    /**
-     * Pauses the currently playing music entry in the queue.
-     * If the queue is not empty, the first entry in the queue is marked as paused.
-     */
-    public void pause() {
-        if (!queueEntries.isEmpty()) {
-            MusicQueueEntry entry = queueEntries.getFirst();
-            entry.setPaused(true);
-            queueEntries.set(0, entry);
-        }
+    public MusicQueueService(MusicQueueManager queueManager,
+                             PlaybackControlService playbackControl,
+                             QueueDurationService durationService,
+                             MusicQueueCacheService cacheService) {
+        this.queueManager = queueManager;
+        this.playbackControl = playbackControl;
+        this.durationService = durationService;
+        this.cacheService = cacheService;
     }
 
     /**
-     * Resumes playback of the currently paused music entry in the queue.
-     * If the queue is not empty, the first entry in the queue is marked as unpaused.
-     */
-    public void play() {
-        if (!queueEntries.isEmpty()) {
-            MusicQueueEntry entry = queueEntries.getFirst();
-            entry.setPaused(false);
-            queueEntries.set(0, entry);
-        }
-    }
-
-    /**
-     * Calculates the total duration of all music entries in the queue,
-     * excluding entries from the backup playlist.
+     * Adds track to queue with full configuration.
      *
-     * @return the total duration (in seconds) of all non-backup playlist entries.
+     * @param entry      Music metadata entry
+     * @param playTime   Already played time in seconds
+     * @param paused     Initial paused state
+     * @param fromBackup Backup playlist origin flag
      */
-    public double totalDuration() {
-        double totalDuration = 0;
-        for (MusicQueueEntry entry : queueEntries) {
-            if (!entry.isFromBackupPlaylist()) totalDuration += entry.getDuration();
-        }
-        return totalDuration;
+    public void addToQueue(MusicCacheEntry entry, double playTime, boolean paused, boolean fromBackup) {
+        queueManager.addToQueue(entry, playTime, paused, fromBackup);
     }
 
     /**
-     * Calculates the remaining time until the queue is empty,
-     * excluding the already played portion of the currently playing entry.
+     * Adds track to queue with default parameters (0 play time, not paused).
      *
-     * @return the remaining time (in seconds) until the queue is empty.
-     */
-    public double queueEmptyIn() {
-        double totalDuration = totalDuration();
-
-        if (!queueEntries.isEmpty()) {
-            totalDuration -= queueEntries.getFirst().getPlayTime();
-        }
-
-        return totalDuration;
-    }
-
-    /**
-     * Calculates the remaining time until the queue is empty and returns it as a human-readable string.
-     * The time is expressed in minutes, or "now" if the queue is already empty.
-     *
-     * @return a string representation of the remaining time in the format "<minutes> minutes",
-     * or "now" if the queue is empty or the remaining time is zero.
-     */
-    public String queueEmptyInAsString() {
-        double time = queueEmptyIn();
-        double minutes = time / 60;
-        return time == 0 ? "now" : String.format("%.1f minutes", minutes);
-    }
-
-    /**
-     * Adds a new music entry to the queue with detailed configuration.
-     *
-     * @param entry              the music cache entry to add to the queue.
-     * @param playTime           the amount of time (in seconds) that has already been played.
-     * @param paused             whether the entry should be paused when added to the queue.
-     * @param fromBackupPlaylist whether the entry is from the backup playlist.
-     */
-    public void addToQueue(MusicCacheEntry entry, double playTime, boolean paused, boolean fromBackupPlaylist) {
-        queueEntries.add(new MusicQueueEntry(entry, playTime, paused, fromBackupPlaylist));
-    }
-
-    /**
-     * Adds a new music entry to the queue with default settings.
-     * The entry will have zero play time, will not be paused, and will not be marked as from the backup playlist.
-     *
-     * @param entry the music cache entry to add to the queue.
+     * @param entry Music metadata entry
      */
     public void addToQueue(MusicCacheEntry entry) {
-        queueEntries.add(new MusicQueueEntry(entry, 0));
+        queueManager.addToQueue(entry);
     }
 
     /**
-     * Adds an existing music queue entry to the queue.
+     * Adds existing queue entry to the queue.
      *
-     * @param entry the music queue entry to add to the queue.
+     * @param entry Pre-configured queue entry
      */
     public void addToQueue(MusicQueueEntry entry) {
-        queueEntries.add(entry);
+        queueManager.addToQueue(entry);
     }
 
     /**
-     * Loads the music queue entries from the specified file on disk into memory.
-     * If the file does not exist or is empty, the cache will remain empty.
+     * Removes entry by URL (full or shortened).
+     *
+     * @param url Track URL to remove
+     */
+    public void removeFromQueue(String url) {
+        queueManager.removeFromQueue(url);
+    }
+
+    /**
+     * Removes entry by position index (zero-based).
+     *
+     * @param position Queue index to remove
+     */
+    public void removeFromQueue(int position) {
+        queueManager.removeFromQueue(position);
+    }
+
+    /**
+     * Removes specific entry from the queue.
+     *
+     * @param entry Queue entry to remove
+     */
+    public void removeFromQueue(MusicQueueEntry entry) {
+        queueManager.getQueueEntries().remove(entry);
+    }
+
+    /**
+     * Searches for entry by URL.
+     *
+     * @param url Full or shortened URL
+     * @return Optional containing matching entry
+     * @throws IllegalArgumentException if URL is null/empty
+     */
+    public Optional<MusicQueueEntry> findInQueue(String url) {
+        return queueManager.getQueueEntries().stream()
+                .filter(e -> e.getUrlShortened().equals(UrlUtil.shortenURL(url)))
+                .findFirst();
+    }
+
+    /**
+     * Pauses current track playback.
+     */
+    public void pause() {
+        playbackControl.pause();
+    }
+
+    /**
+     * Resumes current track playback.
+     */
+    public void play() {
+        playbackControl.play();
+    }
+
+    /**
+     * Skips current track and advances to next.
+     */
+    public void skip() {
+        playbackControl.skip();
+    }
+
+    /**
+     * @return Total duration of non-backup tracks in seconds
+     */
+    public double totalDuration() {
+        return durationService.totalDuration();
+    }
+
+    /**
+     * @return Remaining queue time excluding already played portion
+     */
+    public double queueEmptyIn() {
+        return durationService.queueEmptyIn();
+    }
+
+    /**
+     * @return Human-readable remaining queue time
+     */
+    public String queueEmptyInAsString() {
+        return durationService.queueEmptyInAsString();
+    }
+
+    /**
+     * Loads queue state from persistent storage.
      */
     public void loadCache() {
-        queueEntries = cacheDataHandler.load(PATH);
+        cacheService.loadCache();
     }
 
     /**
-     * Saves the current in-memory music queue entries to the specified file on disk.
-     * This ensures persistence of the cache data across application restarts.
+     * Saves queue state to persistent storage.
      */
     public void saveCache() {
-        cacheDataHandler.save(PATH, queueEntries);
+        cacheService.saveCache();
     }
 
-    @PreDestroy
-    public void destroy() {
-//        Pause before saving so the currently playing song will not be played directly at startup.
-        pause();
-        saveCache();
+    /**
+     * @return Currently playing track or empty if queue is empty
+     */
+    public Optional<MusicQueueEntry> getCurrentlyPlaying() {
+        return queueManager.getCurrentlyPlaying();
+    }
+
+    /**
+     * Replaces currently playing entry while preserving playback state.
+     * WARNING: Should only be used for metadata updates, not track replacement.
+     *
+     * @param entry New entry to set as current
+     */
+    public void replaceCurrentlyPlaying(MusicQueueEntry entry) {
+        queueManager.getCurrentlyPlaying().ifPresent(current -> {
+            queueManager.removeFromQueue(0);
+            queueManager.addToQueue(entry, 0, current.isPaused(), current.isFromBackupPlaylist());
+        });
     }
 }

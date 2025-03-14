@@ -6,7 +6,7 @@ import dev.taway.catnip.dto.request.music.MusicQueueRequest;
 import dev.taway.catnip.dto.response.BasicResponse;
 import dev.taway.catnip.service.PermissionService;
 import dev.taway.catnip.service.music.cache.MusicCacheService;
-import dev.taway.catnip.service.music.cache.UrlUtil;
+import dev.taway.catnip.service.music.util.UrlUtil;
 import dev.taway.catnip.service.music.queue.MusicQueueService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -25,10 +25,10 @@ import java.util.Optional;
 @RequestMapping("/api/music/queue")
 public class MusicQueueController {
     private static final Logger log = LogManager.getLogger(MusicQueueController.class);
-    private MusicCacheService musicCacheService;
-    private MusicQueueService musicQueueService;
-    private PermissionService permissionService;
-    private CatnipConfig catnipConfig;
+    private final MusicCacheService musicCacheService;
+    private final MusicQueueService musicQueueService;
+    private final PermissionService permissionService;
+    private final CatnipConfig catnipConfig;
 
     @Autowired
     public MusicQueueController(MusicCacheService musicCacheService, MusicQueueService musicQueueService, PermissionService permissionService, CatnipConfig catnipConfig) {
@@ -55,7 +55,7 @@ public class MusicQueueController {
 
         BasicResponse response = new BasicResponse();
         String url_shortened = UrlUtil.shortenURL(request.getURL());
-        log.trace(request.toString());
+//        log.trace(request.toString());
 //        Find in cache
         Optional<MusicCacheEntry> entry = musicCacheService.getMusicCacheEntry(url_shortened);
 //        If not found in cache then cache it
@@ -131,7 +131,7 @@ public class MusicQueueController {
             return response;
         }
 
-//        TODO: remove from queue
+
 
         return ResponseEntity.ok(new BasicResponse());
     }

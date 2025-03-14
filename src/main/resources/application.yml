@@ -12,7 +12,7 @@ catnip:
         remove: MOD
         removeLastSelf: ALL
         voteSkip: ALL
-        forceSkip: MOD
+        musicControls: MOD
         blacklist: MOD
         userAction:
           blacklistUser: MOD

@@ -1,4 +1,4 @@
-package dev.taway.catnip.service.music.cache;
+package dev.taway.catnip.service.music.util;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
